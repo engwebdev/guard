@@ -1,0 +1,58 @@
+├── (folder) SoftToken
+│   ├── SoftGuard.php (file)
+│   ├── Soft.php (file)
+│   ├── SoftToken.php (file)
+│   ├── (folder) SoftTokenRequestReaders
+│   │   ├── (folder) SoftTokenIdentifierMethodologies
+│   │   │   ├── SoftTokenIdentifierWith_HS256.php
+│   │   │   ├── SoftTokenIdentifierWith_RS256.php
+│   │   │   ├── SoftTokenIdentifierWith_Pure.php
+│   │   │   ├── ...
+│   │   │   ├── SoftTokenIdentifierWithCustomMethodology.php
+│   │   │   └──
+│   │   ├── SoftTokenIdentifierWithHeader.php
+│   │   ├── SoftTokenIdentifierWithBody.php
+│   │   ├── SoftTokenIdentifierWithQueryString.php
+│   │   ├── SoftTokenIdentifierWithCookie.php
+│   │   ├── ...
+│   │   ├──  SoftTokenRequestReaderWithCustom.php
+│   │   └──
+│   ├── (folder) SoftTokenUserProviders
+│   │   ├── (default) EloquentUserProvider.php
+│   │   ├── ...
+│   │   ├── SoftTokenCustomUserProvider.php
+│   │   └──
+│   ├── (folder) SoftTokenStatefulDrivers
+│   │   ├── (folder) SoftTokenStatefulStorageScopes
+│   │   │   ├── SoftTokenStatefulDomainStorageScopes.php
+│   │   │   ├── ...
+│   │   │   ├── SoftTokenStatefulCustomStorageScope.php
+│   │   │   ├── ...
+│   │   │   └──
+│   │   ├── (default) (database) Eloquent.php
+│   │   ├── SoftTokenStatefulDriversMongoDb.php
+│   │   ├── SoftTokenStatefulDriversCache.php
+│   │   ├── ...
+│   │   ├── SoftTokenStatefulCustomDriver.php
+│   │   └──
+│   ├── (folder) SoftTokenRequestCheckerMethodologies
+│   │   ├── SoftTokenRequestCheckerCookie.php
+│   │   ├── ...
+│   │   ├── SoftTokenRequestCheckerHeader.php
+│   │   ├── SoftTokenRequestCheckerBody.php
+│   │   ├── SoftTokenRequestCheckerQueryString.php
+│   │   ├── SoftTokenRequestCheckerCookie.php
+│   │   ├── ...
+│   │   ├── SoftTokenRequestCheckerCustom.php
+│   │   └──
+│   ├── (folder) SoftTokenReadStoreMoreData
+│   │   ├── SoftTokenStoreModelTokenDataReader.php
+│   │   ├── SoftTokenStoreModelMerchantDataReader.php
+│   │   ├── ...
+│   │   ├── SoftTokenStoreCustomDataReader.php
+│   │   └──
+/* not need
+│   │   ├── (folder) SoftTokenStoreMoreDataReaders
+│   │   │   ├──
+│   │   │   └──
+*/
