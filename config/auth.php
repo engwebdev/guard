@@ -58,7 +58,10 @@ return [
 //            'userProvider' => 'WrapperSoftTokenUserProvider',
 //            'userProvider' => 'TokenToUserProvider',
             'validator' => [
-                'headers' => [
+//                'Headers' => [
+                'RouteParams' => [
+//                'QueryStrings' => [
+//                'Cookies' => [
 //                    'keyword' => 'Authorization',
                     'keyword' => 'jwt',
                     'prefix' => 'Bearer',

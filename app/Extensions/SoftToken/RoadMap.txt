@@ -10,7 +10,7 @@
 │   │   │   ├── ...
 │   │   │   ├── SoftTokenIdentifierWithCustomMethodology.php
 │   │   │   └──
-│   │   ├── SoftTokenIdentifierWithHeader.php
+│   │   ├── SoftTokenIdentifierWithHeader.php // return (SoftTokenIdentified) object
 │   │   ├── SoftTokenIdentifierWithBody.php
 │   │   ├── SoftTokenIdentifierWithQueryString.php
 │   │   ├── SoftTokenIdentifierWithCookie.php
@@ -56,3 +56,9 @@
 │   │   │   ├──
 │   │   │   └──
 */
+
+
+Identified 1-> Identified data (serial number)
+Identified 2-> Identified data (data in Identified)
+Identified 3-> Identified metadata (data in Identified table)
+Identified 4-> Identified metadata (data out Identified table)

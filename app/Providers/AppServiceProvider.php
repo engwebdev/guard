@@ -2,7 +2,8 @@
 
 namespace App\Providers;
 
-use App\Extensions\SoftGuard;
+//use App\Extensions\SoftGuard;
+use App\Extensions\SoftToken\SoftGuard;
 
 //use Illuminate\Auth\EloquentUserProvider;
 //use Illuminate\Support\Facades\App;
@@ -61,7 +62,7 @@ class AppServiceProvider extends ServiceProvider
                 $modelProvider = Auth::createUserProvider($config['provider']);
             }
             $request = app('request');
-            $guard = new softGuard($modelProvider, $request, $config);
+            $guard = new SoftGuard($modelProvider, $request, $config);
 //            dd($guard);
             return $guard;
         });

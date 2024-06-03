@@ -2,7 +2,7 @@
 
 namespace App\Extensions;
 
-use App\Models\Extensions\Scope;
+use App\Extensions\Scope;
 
 class Soft
 {
