@@ -68,8 +68,12 @@ class SoftTokenIdentifierWithHeader
             $Identified->AccessToken = $this->AccessToken;
             $Identified->AccessTokenClaims = $methodology->claims;
             if ($this->config['state'] == 'database') {
-//            Token::where('id', '=', $Identified->AccessTokenID)->first();
-                $Identified->AccessTokenEntityData = []; // todo
+                $id = $Identified->AccessTokenID;
+                $id = 1;
+                $tokenEntity = SoftGuard::$tokenModel::where('id', '=', $id)->first()->toArray();
+//                \App\Models\Token::where('id', '=', $Identified->AccessTokenID)->first();
+//                $Identified->AccessTokenEntityData = []; // todo
+                $Identified->AccessTokenEntityData = $tokenEntity;
             }
             else {
                 $Identified->AccessTokenEntityData = [];

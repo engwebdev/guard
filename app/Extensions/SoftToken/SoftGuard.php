@@ -26,6 +26,7 @@ class SoftGuard implements Guard
         'LINK' => "\App\Extensions\SoftToken\SoftTokenRequestReaders\SoftTokenIdentifierMethodologies\SoftToken_LINK_Methodology", // read from QueryStrings
     ];
 
+    public static string $tokenModel = "\App\Models\Token";
 
     protected UserProvider $provider;
     public ?Authenticatable $user;
@@ -87,6 +88,8 @@ class SoftGuard implements Guard
 //        $softTokenIdentify = $this->RequestReader($this->RequestReader, $this->methodology);
         $softTokenIdentify = $this->RequestReader($this->config);
         $tokenIdentify = $softTokenIdentify->getIdentified();
+
+        dd($tokenIdentify);
         if($tokenIdentify->identifyStatus != null){
             return null;
         }
@@ -316,4 +319,6 @@ class SoftGuard implements Guard
 
         return $initialedSoftConfig;
     }
+
+
 }

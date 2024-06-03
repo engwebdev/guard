@@ -67,8 +67,10 @@ class SoftTokenIdentifierWithRouteParam
             $Identified->AccessToken = $this->AccessToken;
             $Identified->AccessTokenClaims = $methodology->claims;
             if ($this->config['state'] == 'database') {
-//            Token::where('id', '=', $Identified->AccessTokenID)->first();
-                $Identified->AccessTokenEntityData = []; // todo
+                $tokenEntity = SoftGuard::$tokenModel::where('id', '=', $Identified->AccessTokenID)->first()->toArray();
+//                \App\Models\Token::where('id', '=', $Identified->AccessTokenID)->first();
+//                $Identified->AccessTokenEntityData = []; // todo
+                $Identified->AccessTokenEntityData = $tokenEntity; // todo
             }
             else {
                 $Identified->AccessTokenEntityData = [];
@@ -76,6 +78,7 @@ class SoftTokenIdentifierWithRouteParam
             $this->Identify = $Identified;
         }
         catch (\Exception $ex) {
+            dd($ex);
             $Identified->identifyStatus = $ex->getMessage();
             $this->Identify = $Identified;
         }
