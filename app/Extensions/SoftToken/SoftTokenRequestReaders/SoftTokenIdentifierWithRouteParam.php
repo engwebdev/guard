@@ -33,6 +33,8 @@ class SoftTokenIdentifierWithRouteParam
         $Identified = new SoftTokenIdentified();
         try {
             $type = key($this->config['validator']);
+            $methodologyConfig = $this->config['validator'][$type];
+
             $keyword = $this->config['validator'][$type]['keyword'];
             $prefix = $this->config['validator'][$type]['prefix'];
 
@@ -48,37 +50,28 @@ class SoftTokenIdentifierWithRouteParam
                 $this->AccessToken = $this->GetTokenFromRequestRouteParam($keyword, $prefix);
             }
 
-            $secretKeys = [
-                'secretSigner' => $secretSigner,
-            ];
+//            $secretKeys = [
+//                'secretSigner' => $secretSigner,
+//            ];
 //            $secretKeys = [
 //                'publicKey' => $publicKey,
 //                'privetKey' => $privetKey,
 //            ];
 
-            $methodology = new SoftGuard::$methodologies[$algo](
+            $this->Methodology = new SoftGuard::$methodologies[$algo](
                 $this->AccessToken,
-                $secretKeys, // todo standard
+                $methodologyConfig,
             );
-            $methodology->decode();
-            $Identified->identifyStatus = $methodology->tokenStatus;
-            $Identified->setProviderModelIdentify($this->config['provider'], $methodology->claims['sub']);
-            $Identified->AccessTokenID = $methodology->claims['jti'];
+            $this->Methodology->decode();
+            $Identified->identifyStatus = $this->Methodology->tokenStatus;
+            $Identified->setProviderModelIdentify($this->config['provider'], $this->Methodology->claims['sub']);// todo
+            $Identified->AccessTokenID = $this->Methodology->claims['jti'];// todo
             $Identified->AccessToken = $this->AccessToken;
-            $Identified->AccessTokenClaims = $methodology->claims;
-            if ($this->config['state'] == 'database') {
-                $tokenEntity = SoftGuard::$tokenModel::where('id', '=', $Identified->AccessTokenID)->first()->toArray();
-//                \App\Models\Token::where('id', '=', $Identified->AccessTokenID)->first();
-//                $Identified->AccessTokenEntityData = []; // todo
-                $Identified->AccessTokenEntityData = $tokenEntity; // todo
-            }
-            else {
-                $Identified->AccessTokenEntityData = [];
-            }
+            $Identified->AccessTokenClaims = $this->Methodology->claims;// todo
             $this->Identify = $Identified;
         }
         catch (\Exception $ex) {
-            dd($ex);
+//            dd($ex);
             $Identified->identifyStatus = $ex->getMessage();
             $this->Identify = $Identified;
         }
@@ -89,7 +82,7 @@ class SoftTokenIdentifierWithRouteParam
         $routeParam = $this->request->input($keyWord);
         $position = strrpos($routeParam, $prefix . ' ');
         if ($position !== false) {
-            $header = substr($routeParam, $position + 7);
+            $routeParam = substr($routeParam, $position + 7);
             $value = str_contains($routeParam, ',') ? strstr($routeParam, ',', true) : $routeParam;
             return $value;
         }

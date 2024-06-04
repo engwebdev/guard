@@ -14,7 +14,7 @@ class Token extends Model
         'revoked' => 'bool',
         'last_used_at' => 'datetime',
         'date_time_expires_at' => 'datetime',
-        'expires_at' => 'datetime',
+//        'expires_at' => 'datetime',
     ];
 
     protected $fillable = [

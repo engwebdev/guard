@@ -35,6 +35,7 @@ class SoftTokenIdentifierWithHeader
         $Identified = new SoftTokenIdentified();
         try {
             $type = key($this->config['validator']);
+            $methodologyConfig = $this->config['validator'][$type];
             $keyword = $this->config['validator'][$type]['keyword'];
             $prefix = $this->config['validator'][$type]['prefix'];
             $secretSigner = $this->config['validator'][$type]['secretSigner'];
@@ -49,35 +50,24 @@ class SoftTokenIdentifierWithHeader
                 $this->AccessToken = $this->GetTokenFromRequestHeader($keyword, $prefix);
             }
 
-            $secretKeys = [
-                'secretSigner' => $secretSigner,
-            ];
+//            $secretKeys = [
+//                'secretSigner' => $secretSigner,
+//            ];
 //            $secretKeys = [
 //                'publicKey' => $publicKey,
 //                'privetKey' => $privetKey,
 //            ];
 
-            $methodology = new SoftGuard::$methodologies[$algo](
+            $this->Methodology = new SoftGuard::$methodologies[$algo](
                 $this->AccessToken,
-                $secretKeys,
+                $methodologyConfig,
             );
-            $methodology->decode();
-            $Identified->identifyStatus = $methodology->tokenStatus;
-            $Identified->setProviderModelIdentify($this->config['provider'], $methodology->claims['sub']);
-            $Identified->AccessTokenID = $methodology->claims['jti'];
+            $this->Methodology->decode();
+            $Identified->identifyStatus = $this->Methodology->tokenStatus;
+            $Identified->setProviderModelIdentify($this->config['provider'], $this->Methodology->claims['sub']);
+            $Identified->AccessTokenID = $this->Methodology->claims['jti'];
             $Identified->AccessToken = $this->AccessToken;
-            $Identified->AccessTokenClaims = $methodology->claims;
-            if ($this->config['state'] == 'database') {
-                $id = $Identified->AccessTokenID;
-                $id = 1;
-                $tokenEntity = SoftGuard::$tokenModel::where('id', '=', $id)->first()->toArray();
-//                \App\Models\Token::where('id', '=', $Identified->AccessTokenID)->first();
-//                $Identified->AccessTokenEntityData = []; // todo
-                $Identified->AccessTokenEntityData = $tokenEntity;
-            }
-            else {
-                $Identified->AccessTokenEntityData = [];
-            }
+            $Identified->AccessTokenClaims = $this->Methodology->claims;
 
 //        dd($methodology, $Identified);
 

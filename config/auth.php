@@ -58,20 +58,21 @@ return [
 //            'userProvider' => 'WrapperSoftTokenUserProvider',
 //            'userProvider' => 'TokenToUserProvider',
             'validator' => [
-                'Headers' => [
-//                'RouteParams' => [
+//                'Headers' => [
+                'RouteParams' => [
 //                'QueryStrings' => [
 //                'Cookies' => [
 //                    'keyword' => 'Authorization',
-                    'keyword' => 'jwt',
+                    'keyword' => 'otp',
                     'prefix' => 'Bearer',
                     'secretSigner' => env('JWT_SECRET'),
+                    'algo' => 'OTP',
 //                    'algo' => 'RS256',
-                    'algo' => env('JWT_ALGO', 'HS256'),
+//                    'algo' => env('JWT_ALGO', 'HS256'),
                     'ttl' => env('JWT_TTL', 60),
                 ],
             ],
-            'state' => 'database',
+            'state' => 'Database',
             'headerMetaData' => [
                 'one' => 'prv',
                 'two' => 'jti',

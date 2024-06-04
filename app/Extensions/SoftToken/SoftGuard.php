@@ -25,6 +25,10 @@ class SoftGuard implements Guard
         'OTP' => "\App\Extensions\SoftToken\SoftTokenRequestReaders\SoftTokenIdentifierMethodologies\SoftToken_OTP_Methodology", // read from RouteParams
         'LINK' => "\App\Extensions\SoftToken\SoftTokenRequestReaders\SoftTokenIdentifierMethodologies\SoftToken_LINK_Methodology", // read from QueryStrings
     ];
+    public static array $StatefulDrivers = [
+        'Default' => "", // Eloquent
+        'Database' => "\App\Extensions\SoftToken\SoftTokenStatefulDrivers\SoftTokenStatefulDriversDefault",
+    ];
 
     public static string $tokenModel = "\App\Models\Token";
 
@@ -54,13 +58,14 @@ class SoftGuard implements Guard
     //////////////////////////////////////////////
     public function RequestReader($config): SoftTokenIdentified
     {
+//        dd($config['validator']);
 //        dd(key($config['validator']));
 //        $this->RequestReader = $requestReader;
 //        $this->methodology = $methodology;
 //        $this->request = $request;
         $result = new SoftTokenIdentified();
-        if(!in_array(key($config['validator']), array_keys(self::$requestReaders))){
-            $result->identifyStatus = 'Request Validator Not Match request Readers.';
+        if (!in_array(key($config['validator']), array_keys(self::$requestReaders))) {
+            $result->identifyStatus = 'The Request Validator Not Match request Readers.';
             return $result;
         }
         foreach (self::$requestReaders as $key => $value) {
@@ -78,22 +83,65 @@ class SoftGuard implements Guard
         return $result;
     }
 
+    public function StateDrivers($softTokenIdentify)
+    {
+        if (($this->config['state'] == 'stateless') or ($this->config['state'] == null)) {
+            $softTokenIdentify->AccessTokenEntityData = [];
+        }
+        else {
+            if (isset(self::$StatefulDrivers[$this->config['state']])) {
+//                dd($softTokenIdentify);
+                $statefulDrivers = new self::$StatefulDrivers[$this->config['state']](
+                    $softTokenIdentify,
+                    [
+                        'select' => ['id', 'name', 'tokenable_type', 'tokenable_id', 'token', 'expires_at'],
+                        'where' => [
+                            'one' => [
+                                'id' => $softTokenIdentify->AccessTokenID,
+                                'token' => $softTokenIdentify->AccessToken
+                            ],
+                            'two' => [
+                                'tokenable_type' => $softTokenIdentify->getProviderModelName(),
+                                'tokenable_id' => $softTokenIdentify->getProviderModelID(),
+                            ],
+                        ]
+                    ]
+                );
+                $statefulDrivers->loadTokenData();
+            }
+            else {
+                $id = $softTokenIdentify->AccessTokenID;
+                $id = 1;
+                $tokenEntity = self::$tokenModel::where('id', '=', $id)
+                    ->first();
+                if (!$tokenEntity) {
+                    $softTokenIdentify->AccessTokenEntityData = [];
+                }
+                else {
+                    $softTokenIdentify->AccessTokenEntityData = $tokenEntity->toArray();
+                }
+//                \App\Models\Token::where('id', '=', $Identified->AccessTokenID)->first();
+//                $Identified->AccessTokenEntityData = []; // todo
+//                $softTokenIdentify->AccessTokenEntityData = $tokenEntity; // todo
+            }
+        }
+        return $softTokenIdentify;
+    }
+
 
     //////////////////////////////////////////////
 
     public function user(): ?Authenticatable
     {
-//        dd($this);
-//        $this->provider
-//        $softTokenIdentify = $this->RequestReader($this->RequestReader, $this->methodology);
         $softTokenIdentify = $this->RequestReader($this->config);
-        $tokenIdentify = $softTokenIdentify->getIdentified();
+        $softTokenIdentify = $this->StateDrivers($softTokenIdentify);
 
-        dd($tokenIdentify);
-        if($tokenIdentify->identifyStatus != null){
+
+        dd($softTokenIdentify);
+        if ($softTokenIdentify->identifyStatus != null) {
             return null;
         }
-        $this->user = $this->provider->retrieveById($tokenIdentify['providerModelID']);
+        $this->user = $this->provider->retrieveById($softTokenIdentify['providerModelID']);
         // TODO: Implement user() method.
         return $this->user;
     }
@@ -226,6 +274,21 @@ class SoftGuard implements Guard
             }
             $initialedSoftConfig['validator'][$type]['publicKey'] = $publicKey;
             $initialedSoftConfig['validator'][$type]['privateKey'] = $privateKey;
+        }
+        else {
+            // todo all type
+            if (!isset($config['validator'][$type]['secretSigner'])) {
+                if (!isset($defaultConfig['secretSigner'])) {
+                    $secretSigner = null;
+                }
+                else {
+                    $secretSigner = $defaultConfig['secretSigner'];
+                }
+            }
+            else {
+                $secretSigner = $config['validator'][$type]['secretSigner'];
+            }
+            $initialedSoftConfig['validator'][$type]['secretSigner'] = $secretSigner;
         }
 
         if (!isset($config['validator'][$type]['ttl'])) {

@@ -8,24 +8,24 @@ use Firebase\JWT\Key;
 class SoftToken_RS256_Methodology
 {
     protected mixed $tokenString;
-    protected array $secretSigner;
+    protected array $methodologyConfig;
     protected string $publicKey;
     protected string $privetKey;
-    public string $tokenStatus;
+    public string|null $tokenStatus = null;
     public array $claims;
 
-    public function __construct($accessToken, $secretSigner)
+    public function __construct($accessToken, $methodologyConfig)
     {
         $this->tokenString = $accessToken;
-        $this->secretSigner = $secretSigner;
-        $this->publicKey = $secretSigner['publicKey'];
-        $this->privetKey = $secretSigner['privetKey'];
+        $this->methodologyConfig = $methodologyConfig;
+        $this->publicKey = $methodologyConfig['publicKey'];
+        $this->privetKey = $methodologyConfig['privetKey'];
     }
 
     public function decode()
     {
         try {
-            $value = JWT::decode($this->tokenString, new Key($this->secretSigner['publicKey'], 'RS256'));
+            $value = JWT::decode($this->tokenString, new Key($this->publicKey, 'RS256'));
             $this->claims = (array) $value;
         }
         catch (\Exception $ex) {

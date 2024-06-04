@@ -23,13 +23,14 @@
 │   │   ├── SoftTokenCustomUserProvider.php
 │   │   └──
 │   ├── (folder) SoftTokenStatefulDrivers
-│   │   ├── (folder) SoftTokenStatefulStorageScopes
+│   │   ├── (folder) SoftTokenStatefulStorageScopes // todo not need
 │   │   │   ├── SoftTokenStatefulDomainStorageScopes.php
 │   │   │   ├── ...
 │   │   │   ├── SoftTokenStatefulCustomStorageScope.php
 │   │   │   ├── ...
 │   │   │   └──
 │   │   ├── (default) (database) Eloquent.php
+│   │   ├── SoftTokenStatefulDriversDefault.php
 │   │   ├── SoftTokenStatefulDriversMongoDb.php
 │   │   ├── SoftTokenStatefulDriversCache.php
 │   │   ├── ...
