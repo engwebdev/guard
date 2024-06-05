@@ -104,7 +104,43 @@ Route::middleware(['auth:soft'])
 
         Route::get('/test', function (Request $request) {
 //            return 'soft test';
-            dd(Auth('soft'));
+            dd(Auth('soft'),'get');
         });
+
+        Route::post('/test', function (Request $request) {
+//            return 'soft test';
+            dd(Auth('soft'),'post');
+        });
+
+        Route::put('/test', function (Request $request) {
+//            return 'soft test';
+            dd(Auth('soft'),'put');
+        });
+
+        Route::patch('/test', function (Request $request) {
+//            return 'soft test';
+            dd(Auth('soft'),'patch');
+        });
+
+        Route::delete('/test', function (Request $request) {
+//            return 'soft test';
+            dd(Auth('soft'),'delete');
+        });
+
+        Route::options('/test', function (Request $request) {
+//            return 'soft test';
+            dd(Auth('soft'),'options');
+        });
+
+        Route::match('HEAD', '/test', function (Request $request) {
+//            return 'soft test';
+            dd(Auth('soft'),'options');
+        });
+
+
+//        Route::redirect('/test', function (Request $request) {
+////            return 'soft test';
+//            dd(Auth('soft'));
+//        });
 
     });

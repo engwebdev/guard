@@ -73,11 +73,17 @@ return [
                 ],
             ],
             'state' => 'Database',
-            'headerMetaData' => [
-                'one' => 'prv',
-                'two' => 'jti',
+            'requestChecker' => [
+                'headersMetaData' => [
+                    'one' => 'prv',
+                    'two' => 'jti',
+                ],
+                'routeParamsMetaData' => [
+                    'one' => 'prv',
+                    'two' => 'jti',
+                ],
             ],
-            'databaseClaims' => [
+            'databaseMetaDate' => [
 //                'jti' => 'Token',
                 'sub' => ['User', 'id'],
             ],

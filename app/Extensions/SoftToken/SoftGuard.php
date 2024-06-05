@@ -30,6 +30,13 @@ class SoftGuard implements Guard
         'Database' => "\App\Extensions\SoftToken\SoftTokenStatefulDrivers\SoftTokenStatefulDriversDefault",
     ];
 
+    public static array $RequestCheckerMethodologies = [
+        'headersMetaData' => "\App\Extensions\SoftToken\SoftTokenRequestCheckerMethodologies\SoftTokenRequestCheckerHeader",
+        'routeParamsMetaData' => "\App\Extensions\SoftToken\SoftTokenRequestCheckerMethodologies\SoftTokenRequestCheckerRouteParams",
+        'queryStringsMetaData' => "\App\Extensions\SoftToken\SoftTokenRequestCheckerMethodologies\SoftTokenRequestCheckerQueryString",
+        'cookiesMetaData' => "\App\Extensions\SoftToken\SoftTokenRequestCheckerMethodologies\SoftTokenRequestCheckerCookie",
+    ];
+
     public static string $tokenModel = "\App\Models\Token";
 
     protected UserProvider $provider;
@@ -50,7 +57,8 @@ class SoftGuard implements Guard
         $this->request = $request;
         $this->defaultConfig = Config::get('soft');
         $this->config = $this->initialSoftConfig($configuration, $this->defaultConfig);
-//        dd($configuration, $this->config);
+//        dd($this->request->attributes);
+//        dd($this->request);
 //        $this->initialSoftConfig();
 //        $token = $this->request->bearerToken();
     }
@@ -95,23 +103,30 @@ class SoftGuard implements Guard
                     $softTokenIdentify,
                     [
                         'select' => ['id', 'name', 'tokenable_type', 'tokenable_id', 'token', 'expires_at'],
-                        'where' => [
-                            'one' => [
-                                'id' => $softTokenIdentify->AccessTokenID,
-                                'token' => $softTokenIdentify->AccessToken
-                            ],
-                            'two' => [
-                                'tokenable_type' => $softTokenIdentify->getProviderModelName(),
-                                'tokenable_id' => $softTokenIdentify->getProviderModelID(),
-                            ],
-                        ]
+                        'where' =>
+                            [
+                                'one' => [
+                                    'id' => $softTokenIdentify->AccessTokenID,
+//                                    'id' => 'AccessTokenID',
+                                    'token' => $softTokenIdentify->AccessToken,
+//                                    'token' => 'AccessToken'
+//                                    'name' => $softTokenIdentify->AccessTokenEntityData['name'],
+////                                    'name' => 'AccessTokenName' // todo
+                                ],
+                                'two' => [
+                                    'tokenable_type' => $softTokenIdentify->getProviderModelName(),
+                                    'tokenable_id' => $softTokenIdentify->getProviderModelID(),
+//                                    'tokenable_type' => 'providerModelName',
+//                                    'tokenable_id' => 'providerModelID',
+                                ],
+                            ]
                     ]
                 );
                 $statefulDrivers->loadTokenData();
             }
             else {
                 $id = $softTokenIdentify->AccessTokenID;
-                $id = 1;
+//                $id = 1;
                 $tokenEntity = self::$tokenModel::where('id', '=', $id)
                     ->first();
                 if (!$tokenEntity) {
@@ -121,13 +136,51 @@ class SoftGuard implements Guard
                     $softTokenIdentify->AccessTokenEntityData = $tokenEntity->toArray();
                 }
 //                \App\Models\Token::where('id', '=', $Identified->AccessTokenID)->first();
-//                $Identified->AccessTokenEntityData = []; // todo
-//                $softTokenIdentify->AccessTokenEntityData = $tokenEntity; // todo
             }
         }
         return $softTokenIdentify;
     }
 
+    public function RequestChecker($config, $softTokenIdentify)
+    {
+        foreach (self::$RequestCheckerMethodologies as $key => $value) {
+            if (in_array($key, array_keys($config['requestChecker']))) {
+                $MetaData = $config['requestChecker'][$key];
+                $requestChecker = new self::$RequestCheckerMethodologies[$key](
+                    $MetaData,
+                    $this->request,
+                    $softTokenIdentify,
+                );
+                $requestChecker->getCheckAbleData();
+                if ($requestChecker->matchDataStatus != null) {
+                    $softTokenIdentify->identifyStatus = $requestChecker->matchDataStatus;
+                    // $this->errorLogArrayPush()
+//                    dd($requestChecker);
+                    break;
+                }
+            }
+        }
+        return $softTokenIdentify;
+//////////////////////////////////////////
+        /*
+        foreach ($config['requestChecker'] as $key => $item){
+            $MetaData = $config['requestChecker'][$key];
+            $requestChecker = new self::$RequestCheckerMethodologies[$key](
+                $MetaData,
+                $this->request,
+                $softTokenIdentify,
+            );
+            $requestChecker->getCheckAbleData();
+            if($requestChecker->matchDataStatus != null){
+                $softTokenIdentify->identifyStatus = $requestChecker->matchDataStatus;
+                // $this->errorLogArrayPush()
+                return $softTokenIdentify;
+                break;
+            }
+        }
+        return $softTokenIdentify;
+        */
+    }
 
     //////////////////////////////////////////////
 
@@ -135,6 +188,7 @@ class SoftGuard implements Guard
     {
         $softTokenIdentify = $this->RequestReader($this->config);
         $softTokenIdentify = $this->StateDrivers($softTokenIdentify);
+        $softTokenIdentify = $this->RequestChecker($this->config, $softTokenIdentify);
 
 
         dd($softTokenIdentify);
@@ -317,68 +371,53 @@ class SoftGuard implements Guard
         }
         $initialedSoftConfig['state'] = $state;
 
-        if (!isset($config['headerMetaData'])) {
-            if (!isset($defaultConfig['headerMetaData'])) {
-                $headerMetaData = false;
-            }
-            else {
-                $headerMetaData = $defaultConfig['headerMetaData'];
-            }
+        if (!isset($config['requestChecker'])) {
+            $initialedSoftConfig['requestChecker'] = [];
         }
         else {
-            $headerMetaData = $config['headerMetaData'];
-        }
-        if (!is_array($headerMetaData)) {
-            $headerMetaData = [];
-        }
-        $initialedSoftConfig['headerMetaData'] = $headerMetaData;
+            $requestCheckerKeys = [
+                'headersMetaData',
+                'routeParamsMetaData',
+                'queryStringsMetaData',
+                'cookiesMetaData',
+            ];
 
-        if (!isset($config['databaseClaims'])) {
-            if (!isset($defaultConfig['databaseClaims'])) {
-                $databaseClaims = false;
+            foreach ($config['requestChecker'] as $key => $value) {
+                if (in_array($key, $requestCheckerKeys)) {
+                    if (!isset($config['requestChecker'][$key])) {
+                        if (!isset($defaultConfig[$key])) {
+                            $MetaData = [];
+                        }
+                        else {
+                            $MetaData = $defaultConfig[$key];
+                        }
+                    }
+                    else {
+                        $MetaData = $config['requestChecker'][$key];
+                    }
+                    if (!is_array($MetaData)) {
+                        $MetaData = [];
+                    }
+                    $initialedSoftConfig['requestChecker'][$key] = $MetaData;
+                }
             }
-            else {
-                $databaseClaims = $defaultConfig['databaseClaims'];
-            }
         }
-        else {
-            $databaseClaims = $config['databaseClaims'];
-        }
-        if (!is_array($databaseClaims)) {
-            $databaseClaims = [];
-        }
-        $initialedSoftConfig['databaseClaims'] = $databaseClaims;
 
-        if (!isset($config['bodyMetaData'])) {
-            if (!isset($defaultConfig['bodyMetaData'])) {
-                $bodyMetaData = false;
+        if (!isset($config['databaseMetaDate'])) {
+            if (!isset($defaultConfig['databaseMetaDate'])) {
+                $databaseMetaDate = false;
             }
             else {
-                $bodyMetaData = $defaultConfig['bodyMetaData'];
+                $databaseMetaDate = $defaultConfig['databaseMetaDate'];
             }
         }
         else {
-            $bodyMetaData = $config['bodyMetaData'];
+            $databaseMetaDate = $config['databaseMetaDate'];
         }
-        if (!is_array($bodyMetaData)) {
-            $bodyMetaData = [];
+        if (!is_array($databaseMetaDate)) {
+            $databaseMetaDate = [];
         }
-        $initialedSoftConfig['bodyMetaData'] = $bodyMetaData;
-        if (!isset($config['queryStringMetaData'])) {
-            if (!isset($defaultConfig['queryStringMetaData'])) {
-                $queryStringMetaData = false;
-            }
-            else {
-                $queryStringMetaData = $defaultConfig['queryStringMetaData'];
-            }
-        }
-        else {
-            $queryStringMetaData = $config['queryStringMetaData'];
-        }
-        if (!is_array($queryStringMetaData)) {
-            $queryStringMetaData = [];
-        }
-        $initialedSoftConfig['queryStringMetaData'] = $queryStringMetaData;
+        $initialedSoftConfig['databaseMetaDate'] = $databaseMetaDate;
 
         return $initialedSoftConfig;
     }

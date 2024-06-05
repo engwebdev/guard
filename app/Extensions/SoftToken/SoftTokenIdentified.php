@@ -36,6 +36,13 @@ class SoftTokenIdentified
      */
     public string|null $AccessTokenID = null;
 
+//    /**
+//     * Name Access Token
+//     *
+//     * @var string|null
+//     */
+//    public string|null $AccessTokenName = null;
+
     /**
      * Access Token
      *

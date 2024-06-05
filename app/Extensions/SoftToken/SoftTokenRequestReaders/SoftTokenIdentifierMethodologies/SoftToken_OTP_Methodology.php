@@ -22,7 +22,7 @@ class SoftToken_OTP_Methodology
     public function decode()
     {
         $model = SoftGuard::$tokenModel;
-        $record = $model::select()
+        $record = $model::select('id', 'name', 'tokenable_type', 'tokenable_id', 'token', 'date_time_expires_at', 'expires_at')
             ->where('token', '=', $this->tokenString)
             ->first();
         if (!$record) {

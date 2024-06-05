@@ -14,7 +14,7 @@ class SoftTokenStatefulDriversDefault
     {
         $this->softToken = $token;
         $this->statefulDriverConfig = $statefulDriverConfig;
-//        dd($this);
+//        dd($this->softToken);
     }
 
     public function loadTokenData(): SoftTokenIdentified
@@ -24,13 +24,21 @@ class SoftTokenStatefulDriversDefault
         $id = $this->softToken->AccessTokenID;
 //        $id = 1;
 
-        $tokenEntity = SoftGuard::$tokenModel::select('id', 'name', 'tokenable_type', 'tokenable_id')
-            ->where('id', '=', $id)
-            ->first();
-        if (!$tokenEntity) {
-            $this->softToken->AccessTokenEntityData = [];
+        $tokenEntity = SoftGuard::$tokenModel::query();
+        if ($this->statefulDriverConfig) {
+            $tokenEntity = $this->statefulDriverConfigToQuery($tokenEntity);
+            if (!$tokenEntity) {
+                $this->softToken->AccessTokenEntityData = [];
+            }
+            else {
+                $this->softToken->AccessTokenEntityData = $tokenEntity->toArray();
+            }
         }
         else {
+        $tokenEntity = SoftGuard::$tokenModel::select('id', 'name', 'tokenable_type', 'tokenable_id', 'token', 'expires_at')
+            ->where('id', '=', $id)
+            ->where('token', '=', $AccessToken)
+            ->first();
             $this->softToken->AccessTokenEntityData = $tokenEntity->toArray();
         }
         // loads data
@@ -39,25 +47,65 @@ class SoftTokenStatefulDriversDefault
 
     private function checkConfig()
     {
-        if ($this->statefulDriverConfig) {
-            $query = $this->statefulDriverConfigToQuery();
-            dd($query);
+        try {
+            if ($this->statefulDriverConfig) {
+                if ($this->statefulDriverConfig['where']) {
+                    foreach ($this->statefulDriverConfig['where'] as $itemKey => $item) {
+                        foreach ($item as $column => $value) {
+                            if ($value == 'AccessTokenID') {
+                                $value = (string)$this->softToken->AccessTokenID;
+                                $this->statefulDriverConfig['where'][$itemKey][$column] = $value;
+                            }
+                            if ($value == 'AccessToken') {
+                                $value = (string)$this->softToken->AccessToken;
+                                $this->statefulDriverConfig['where'][$itemKey][$column] = $value;
+                            }
+                            if ($value == 'providerModelName') {
+                                $value = (string)$this->softToken->getProviderModelName();
+                                $this->statefulDriverConfig['where'][$itemKey][$column] = $value;
+                            }
+                            if ($value == 'providerModelID') {
+                                $value = (string)$this->softToken->getProviderModelID();
+                                $this->statefulDriverConfig['where'][$itemKey][$column] = $value;
+                            }
+                        }
+                    }
+                }
+            }
         }
+        catch (\Exception $ex) {
+            $tokenStatus = "Invalid Stateful Driver Config";
+            $exception = new \Exception($tokenStatus);
+//            $exception->setPayload($claims);
+            throw $exception;
+        }
+
     }
 
-    private function statefulDriverConfigToQuery()
+    private function statefulDriverConfigToQuery($tokenEntity)
     {
-        $tokenEntity = SoftGuard::$tokenModel::query();
-        $tokenEntity->select($this->statefulDriverConfig['select']);
-        foreach ($this->statefulDriverConfig['where'] as $item){
-            $tokenEntity->orwhere(function ($tokenEntity) use ($item) {
-                foreach ($item as $key => $value) {
-                    $tokenEntity->where($key, $value);
+        try {
+//            $tokenEntity = SoftGuard::$tokenModel::query();
+            if ($this->statefulDriverConfig['select']) {
+                $tokenEntity->select($this->statefulDriverConfig['select']);
+            }
+            if ($this->statefulDriverConfig['where']) {
+                foreach ($this->statefulDriverConfig['where'] as $item) {
+                    $tokenEntity->orwhere(function ($tokenEntity) use ($item) {
+                        foreach ($item as $key => $value) {
+                            $tokenEntity->where($key, $value);
+                        }
+                    });
                 }
-            });
+            }
+            $result = $tokenEntity->first();
         }
-        $result = $tokenEntity->first()->toArray();
-//        $result = $tokenEntity->toArray();
+        catch (\Exception $ex) {
+            $tokenStatus = "Invalid Stateful Driver Config";
+            $exception = new \Exception($tokenStatus);
+//            $exception->setPayload($claims);
+            throw $exception;
+        }
         return $result;
     }
 }
