@@ -10,15 +10,15 @@ class SoftTokenRequestCheckerHeader
 {
     public string|null $matchDataStatus = null;
     protected array|null $checkAbleData = [];
-    protected Request $request;
     protected SoftTokenIdentified $softToken;
+    protected Request $request;
     public array|null $matchData = [];
 
     public function __construct(array $data, Request $request, SoftTokenIdentified $softTokenIdentify)
     {
         $this->checkAbleData = $data;
-        $this->request = $request;
         $this->softToken = $softTokenIdentify;
+        $this->request = $request;
         $this->getMetaDataFromRequestHeader();
     }
 
@@ -27,7 +27,7 @@ class SoftTokenRequestCheckerHeader
         foreach ($this->checkAbleData as $key => $value) {
             $matchAble = $this->request->header($key);
             if (!isset($this->softToken->AccessTokenClaims[$value])) {
-                $message = 'Undefined array key ' . $value;
+                $message = 'In header checker undefined array key ' . $value . ' in claims';
                 $this->setCheckUnMatch($key, $value, $message);
             }
             else {

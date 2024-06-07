@@ -64,28 +64,48 @@ return [
 //                'Cookies' => [
 //                    'keyword' => 'Authorization',
                     'keyword' => 'otp',
+//                    'keyword' => 'jwt',
                     'prefix' => 'Bearer',
                     'secretSigner' => env('JWT_SECRET'),
                     'algo' => 'OTP',
+//                    'algo' => 'HS256',
 //                    'algo' => 'RS256',
 //                    'algo' => env('JWT_ALGO', 'HS256'),
                     'ttl' => env('JWT_TTL', 60),
                 ],
             ],
-            'state' => 'Database',
+            'state' => [
+                'driver' => 'Database',
+                'identifyCondition' => [],
+//                'identifyCondition' => [
+//                    'select' => [],
+//                    'where' => [
+//                        0 => [],
+//                        1 => [],
+//                    ],
+//                ],
+            ],
             'requestChecker' => [
                 'headersMetaData' => [
-                    'one' => 'prv',
-                    'two' => 'jti',
+                    'one' => 'jti',
+                    'two' => 'sub',
                 ],
                 'routeParamsMetaData' => [
-                    'one' => 'prv',
-                    'two' => 'jti',
+                    'phone_number' => 'name',
+//                    'two' => 'sub',
+                ],
+                'queryStringsMetaData' => [
+                    'link' => 'id',
                 ],
             ],
-            'databaseMetaDate' => [
+            'storedDataChecker' => [
 //                'jti' => 'Token',
-                'sub' => ['User', 'id'],
+                'jti' => ['Token', 'id'],
+                'sub' => ['user', 'id'],
+            ],
+            'databaseMetaDate' => [
+                'provider',
+                'client',
             ],
         ],
     ],

@@ -64,6 +64,7 @@ class SoftTokenIdentifierWithHeader
             );
             $this->Methodology->decode();
             $Identified->identifyStatus = $this->Methodology->tokenStatus;
+            $Identified->setIdentifyStatusLogs($Identified->identifyStatus, 'IdentifierWith Methodology ' . (string)$algo );
             $Identified->setProviderModelIdentify($this->config['provider'], $this->Methodology->claims['sub']);
             $Identified->AccessTokenID = $this->Methodology->claims['jti'];
             $Identified->AccessToken = $this->AccessToken;
@@ -75,6 +76,7 @@ class SoftTokenIdentifierWithHeader
         }
         catch (\Exception $ex) {
             $Identified->identifyStatus = $ex->getMessage();
+            $Identified->setIdentifyStatusLogs($Identified->identifyStatus, 'IdentifierWithHeader');
             $this->Identify = $Identified;
         }
     }

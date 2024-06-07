@@ -64,6 +64,7 @@ class SoftTokenIdentifierWithRouteParam
             );
             $this->Methodology->decode();
             $Identified->identifyStatus = $this->Methodology->tokenStatus;
+            $Identified->setIdentifyStatusLogs($Identified->identifyStatus, 'IdentifierWith Methodology ' . (string)$algo );
             $Identified->setProviderModelIdentify($this->config['provider'], $this->Methodology->claims['sub']);// todo
             $Identified->AccessTokenID = $this->Methodology->claims['jti'];// todo
             $Identified->AccessToken = $this->AccessToken;
@@ -73,6 +74,7 @@ class SoftTokenIdentifierWithRouteParam
         catch (\Exception $ex) {
 //            dd($ex);
             $Identified->identifyStatus = $ex->getMessage();
+            $Identified->setIdentifyStatusLogs($Identified->identifyStatus, 'IdentifierWithRouteParam');
             $this->Identify = $Identified;
         }
     }

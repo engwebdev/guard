@@ -17,11 +17,6 @@
 │   │   ├── ...
 │   │   ├──  SoftTokenRequestReaderWithCustom.php
 │   │   └──
-│   ├── (folder) SoftTokenUserProviders
-│   │   ├── (default) EloquentUserProvider.php
-│   │   ├── ...
-│   │   ├── SoftTokenCustomUserProvider.php
-│   │   └──
 │   ├── (folder) SoftTokenStatefulDrivers
 │   │   ├── (folder) SoftTokenStatefulStorageScopes // todo not need
 │   │   │   ├── SoftTokenStatefulDomainStorageScopes.php
@@ -51,6 +46,11 @@
 │   │   ├── SoftTokenStoreModelMerchantDataReader.php
 │   │   ├── ...
 │   │   ├── SoftTokenStoreCustomDataReader.php
+│   │   └──
+│   ├── (folder) SoftTokenUserProviders
+│   │   ├── (default) EloquentUserProvider.php
+│   │   ├── ...
+│   │   ├── SoftTokenCustomUserProvider.php
 │   │   └──
 /* not need
 │   │   ├── (folder) SoftTokenStoreMoreDataReaders

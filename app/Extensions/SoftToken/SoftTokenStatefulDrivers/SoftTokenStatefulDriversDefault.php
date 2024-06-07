@@ -17,7 +17,7 @@ class SoftTokenStatefulDriversDefault
 //        dd($this->softToken);
     }
 
-    public function loadTokenData(): SoftTokenIdentified
+    public function loadTokenData()
     {
         $this->checkConfig();
         $AccessToken = $this->softToken->AccessToken;
@@ -28,24 +28,26 @@ class SoftTokenStatefulDriversDefault
         if ($this->statefulDriverConfig) {
             $tokenEntity = $this->statefulDriverConfigToQuery($tokenEntity);
             if (!$tokenEntity) {
-                $this->softToken->AccessTokenEntityData = [];
+                $tokenEntity = [];
+//                $this->softToken->AccessTokenEntityData = [];
             }
             else {
-                $this->softToken->AccessTokenEntityData = $tokenEntity->toArray();
+                $tokenEntity = $tokenEntity->toArray();
+//                $this->softToken->AccessTokenEntityData = $tokenEntity->toArray();
             }
         }
         else {
         $tokenEntity = SoftGuard::$tokenModel::select('id', 'name', 'tokenable_type', 'tokenable_id', 'token', 'expires_at')
-            ->where('id', '=', $id)
             ->where('token', '=', $AccessToken)
             ->first();
-            $this->softToken->AccessTokenEntityData = $tokenEntity->toArray();
+            $tokenEntity = $tokenEntity->toArray();
+//            $this->softToken->AccessTokenEntityData = $tokenEntity;
         }
         // loads data
-        return $this->softToken;
+        return $tokenEntity;
     }
 
-    private function checkConfig()
+    private function checkConfig(): void
     {
         try {
             if ($this->statefulDriverConfig) {
@@ -74,7 +76,7 @@ class SoftTokenStatefulDriversDefault
             }
         }
         catch (\Exception $ex) {
-            $tokenStatus = "Invalid Stateful Driver Config";
+            $tokenStatus = "Invalid Stateful Driver Config... => " . $ex->getMessage();
             $exception = new \Exception($tokenStatus);
 //            $exception->setPayload($claims);
             throw $exception;
@@ -86,7 +88,7 @@ class SoftTokenStatefulDriversDefault
     {
         try {
 //            $tokenEntity = SoftGuard::$tokenModel::query();
-            if ($this->statefulDriverConfig['select']) {
+            if (isset($this->statefulDriverConfig['select'])) {
                 $tokenEntity->select($this->statefulDriverConfig['select']);
             }
             if ($this->statefulDriverConfig['where']) {
@@ -101,7 +103,7 @@ class SoftTokenStatefulDriversDefault
             $result = $tokenEntity->first();
         }
         catch (\Exception $ex) {
-            $tokenStatus = "Invalid Stateful Driver Config";
+            $tokenStatus = "Invalid Stateful Driver Config... => " . $ex->getMessage();
             $exception = new \Exception($tokenStatus);
 //            $exception->setPayload($claims);
             throw $exception;

@@ -5,6 +5,7 @@ namespace App\Extensions\SoftToken;
 class SoftTokenIdentified
 {
     public string|null $identifyStatus = null;
+    public array|null $identifyStatusLogs = [];
     /**
      * provider Model Name
      *
@@ -30,18 +31,25 @@ class SoftTokenIdentified
     ];
 
     /**
+     * Provide rModel Entity Data
+     *
+     * @var array|null
+     */
+    public array|null $providerModelEntityData = [];
+
+    /**
      * ID Access Token
      *
      * @var string|null
      */
     public string|null $AccessTokenID = null;
 
-//    /**
-//     * Name Access Token
-//     *
-//     * @var string|null
-//     */
-//    public string|null $AccessTokenName = null;
+    /**
+     * Name Access Token
+     *
+     * @var string|null
+     */
+    public string|null $AccessTokenName = null;
 
     /**
      * Access Token
@@ -63,6 +71,13 @@ class SoftTokenIdentified
      * @var array|null
      */
     public array|null $AccessTokenEntityData = [];
+
+    /**
+     * Provide rModel Entity Data
+     *
+     * @var array|null
+     */
+    public array|null $MoreModelEntityData = [];
 
     public function setProviderModelName(?string $providerModelName): void
     {
@@ -116,10 +131,25 @@ class SoftTokenIdentified
 //        $this->IdentifierMethodology($methodology, $AccessToken); // todo not need
         // todo set Identified
         $this->providerModelIdentify = []; // [model => user, modelId => user_id]
-        $this->AccessTokenID= null; // jti
+        $this->AccessTokenID = null; // jti
         $this->AccessToken = null; // token string
         $this->AccessTokenClaims = []; // token claims
         $this->AccessTokenEntityData = []; // token data from table
         return $this;
+    }
+
+    public function getIdentifyStatusLogs(): ?array
+    {
+        return $this->identifyStatusLogs;
+    }
+
+    public function setIdentifyStatusLogs($message, $Key = null): void
+    {
+        if (!empty($Key)) {
+            $this->identifyStatusLogs[] = [$Key => $message];
+        }
+        else {
+            $this->identifyStatusLogs[] = [$message];
+        }
     }
 }
