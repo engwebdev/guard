@@ -622,6 +622,7 @@ class SoftGuard implements Guard
         }
 
 
+        dd($this);
         dd($softTokenIdentified);
         if ($softTokenIdentify->identifyStatus != null) {
             return null;

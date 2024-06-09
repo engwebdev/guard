@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models\Http\Controllers\Api\Jwt;
+namespace App\Http\Controllers\Api\Jwt;
 
-use App\Models\Http\Controllers\Controller;
-use App\Models\Models\User;
+use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -76,6 +76,7 @@ class JwtController extends Controller
             'password' => $request->password,
         ]);
 
+        dd(auth('jwt'));
         // eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2p3dC9sb2dpbiIsImlhdCI6MTcxNTQ0NzA1MiwiZXhwIjoxNzE1NDUwNjUyLCJuYmYiOjE3MTU0NDcwNTIsImp0aSI6IjRjVkNLeTdVY3FVdm5udWsiLCJzdWIiOiIxIiwicHJ2IjoiMjNiZDVjODk0OWY2MDBhZGIzOWU3MDFjNDAwODcyZGI3YTU5NzZmNyJ9.L9mhTriGgKMFCdmmr8Ti9KNb91FHk84qwovXr9cjNfg
         // if token successfully generated then display success response
         // if attempt failed then "unauthenticated" will be returned automatically
@@ -96,6 +97,8 @@ class JwtController extends Controller
                     ],
                 ],
             ]);
+        }else{
+            return response()->json([]);
         }
     }
 

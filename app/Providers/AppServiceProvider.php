@@ -29,8 +29,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+//        dd(__DIR__ . '/oauth');
         //
-        Passport::loadKeysFrom(__DIR__ . '/../secrets/oauth');
+//        Passport::loadKeysFrom(__DIR__ );
         Passport::personalAccessTokensExpireIn(now()->addMonths(6));
         //
         Auth::extend('soft', function (Application $app, string $name, array $config) {

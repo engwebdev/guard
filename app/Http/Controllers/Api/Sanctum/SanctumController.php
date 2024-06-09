@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models\Http\Controllers\Api\Sanctum;
+namespace App\Http\Controllers\Api\Sanctum;
 
 use App\Models\Http\Controllers\Controller;
-use App\Models\Models\User;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;

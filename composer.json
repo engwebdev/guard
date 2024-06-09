@@ -10,6 +10,7 @@
         "laravel/passport": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "lcobucci/jwt": "4.3",
         "php-open-source-saver/jwt-auth": "^2.3"
     },
     "require-dev": {
