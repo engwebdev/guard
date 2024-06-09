@@ -65,7 +65,7 @@ return [
 //                    'keyword' => 'Authorization',
                     'keyword' => 'otp',
 //                    'keyword' => 'jwt',
-                    'prefix' => 'Bearer',
+//                    'prefix' => 'Bearer',
                     'secretSigner' => env('JWT_SECRET'),
                     'algo' => 'OTP',
 //                    'algo' => 'HS256',
@@ -75,6 +75,8 @@ return [
                 ],
             ],
             'state' => [
+//                'type' => 'stateless',
+                'type' => 'stateful',
                 'driver' => 'Database',
                 'identifyCondition' => [],
 //                'identifyCondition' => [
@@ -104,8 +106,8 @@ return [
                 'sub' => ['user', 'id'],
             ],
             'databaseMetaDate' => [
-                'provider',
-                'client',
+//                'providerModel' => 'User',
+                'clientModel' => 'user',
             ],
         ],
     ],
@@ -130,7 +132,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\Models\User::class),
+            'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
         // 'users' => [

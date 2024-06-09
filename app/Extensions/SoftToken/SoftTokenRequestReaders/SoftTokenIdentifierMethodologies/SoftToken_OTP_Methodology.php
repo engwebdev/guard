@@ -26,12 +26,12 @@ class SoftToken_OTP_Methodology
             ->where('token', '=', $this->tokenString)
             ->first();
         if (!$record) {
-            $claims = [];
-            // todo make new Exception
+            $this->claims = [];
             $this->tokenStatus = "Invalid otp code";
-            $exception = new \Exception($this->tokenStatus);
-//            $exception->setPayload($claims);
-            throw $exception;
+            // todo make new Exception not need
+//            $exception = new \Exception($this->tokenStatus);
+////            $exception->setPayload($claims);
+//            throw $exception;
         }
         else {
             // todo check otp time
@@ -40,15 +40,17 @@ class SoftToken_OTP_Methodology
             $ttl = (int)$this->methodologyConfig['ttl'];
             if ($claims['expires_at'] < Carbon::now()->addMinutes($ttl)->getTimestampMs()) {
                 $this->tokenStatus = "Expired otp code";
-                $exception = new \Exception($this->tokenStatus);
-//            $exception->setPayload($claims);
-                throw $exception;
+//                $exception = new \Exception($this->tokenStatus);
+////            $exception->setPayload($claims);
+//                throw $exception;
             }
             else {
-                $claims['jti'] = $claims['id'];
-                $claims['sub'] = $claims['tokenable_id'];
-                $this->claims = $claims;
+                $this->tokenStatus = null;
             }
+            $claims['jti'] = $claims['id'];
+            $claims['sub'] = $claims['tokenable_id'];
+            $this->claims = $claims;
+
         }
     }
 

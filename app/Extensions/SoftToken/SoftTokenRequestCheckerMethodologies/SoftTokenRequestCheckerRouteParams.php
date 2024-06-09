@@ -47,20 +47,19 @@ class SoftTokenRequestCheckerRouteParams
         $this->matchData[$headerKeyName] = [$tokenClaimName, false, $message];
         $this->matchDataStatus = $message;
     }
-
     private function setCheckMatch($headerKeyName, $tokenClaimName): void
     {
         $this->matchData[$headerKeyName] = [$tokenClaimName, true];
     }
 
-    /**
-     * @return array|null
-     */
+    public function getMatchDataStatus(): ?string
+    {
+        return $this->matchDataStatus;
+    }
     public function getCheckAbleData(): ?array
     {
         return $this->checkAbleData;
     }
-
     public function getMatchData(): ?array
     {
         return $this->matchData;

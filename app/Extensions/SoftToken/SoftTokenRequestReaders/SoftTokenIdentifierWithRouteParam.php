@@ -13,6 +13,9 @@ class SoftTokenIdentifierWithRouteParam
     public SoftTokenIdentified $Identify;
     protected Request $request;
     protected mixed $config;
+    public string|null $status;
+    public array|null $AccessTokens;
+    public array $claims;
 
     public function __construct(Request $request, $config)
     {
@@ -64,7 +67,7 @@ class SoftTokenIdentifierWithRouteParam
             );
             $this->Methodology->decode();
             $Identified->identifyStatus = $this->Methodology->tokenStatus;
-            $Identified->setIdentifyStatusLogs($Identified->identifyStatus, 'IdentifierWith Methodology ' . (string)$algo );
+            $Identified->setIdentifyStatusLogs($Identified->identifyStatus, 'IdentifierWith Methodology ' . (string)$algo);
             $Identified->setProviderModelIdentify($this->config['provider'], $this->Methodology->claims['sub']);// todo
             $Identified->AccessTokenID = $this->Methodology->claims['jti'];// todo
             $Identified->AccessToken = $this->AccessToken;
@@ -89,6 +92,45 @@ class SoftTokenIdentifierWithRouteParam
             return $value;
         }
         return $routeParam;
+    }
+
+    public function loader(): void
+    {
+        $type = key($this->config['validator']);
+//        $methodologyConfig = $this->config['validator'][$type];
+        $keyword = $this->config['validator'][$type]['keyword'];
+        $prefix = $this->config['validator'][$type]['prefix'];
+
+        if ((is_array($keyword)) and (is_array($prefix))) {
+            if (count($keyword) != count($prefix)) {
+                $this->status = 'keyword and prefix is not match.';
+                $this->AccessToken = null;
+                $this->AccessTokens = [];
+            }
+            else {
+                foreach ($keyword as $key => $value) {
+                    $AccessToken = $this->GetTokenFromRequestRouteParam($value, $prefix[$key]);
+                    $this->status = null;
+                    $this->AccessToken = $AccessToken;
+                    $this->AccessTokens[(string)$value] = [$this->AccessToken];
+                }
+            }
+        }
+        else {
+            $AccessToken = $this->GetTokenFromRequestRouteParam($keyword, $prefix);
+            $this->status = null;
+            $this->AccessToken = $AccessToken;
+        }
+    }
+
+    public function getAccessToken(): ?string
+    {
+        return $this->AccessToken;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
     }
 
 }

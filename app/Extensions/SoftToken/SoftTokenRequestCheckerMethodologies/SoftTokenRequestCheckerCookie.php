@@ -53,14 +53,14 @@ class SoftTokenRequestCheckerCookie
         $this->matchData[$headerKeyName] = [$tokenClaimName, true];
     }
 
-    /**
-     * @return array|null
-     */
+    public function getMatchDataStatus(): ?string
+    {
+        return $this->matchDataStatus;
+    }
     public function getCheckAbleData(): ?array
     {
         return $this->checkAbleData;
     }
-
     public function getMatchData(): ?array
     {
         return $this->matchData;

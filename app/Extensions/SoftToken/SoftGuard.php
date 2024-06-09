@@ -3,6 +3,7 @@
 namespace App\Extensions\SoftToken;
 
 //use App\Extensions\SoftToken\SoftTokenRequestReaders\SoftTokenIdentifierWithHeader;
+use App\Extensions\SoftToken;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\UserProvider;
@@ -25,11 +26,13 @@ class SoftGuard implements Guard
         'OTP' => "\App\Extensions\SoftToken\SoftTokenRequestReaders\SoftTokenIdentifierMethodologies\SoftToken_OTP_Methodology", // read from RouteParams
         'LINK' => "\App\Extensions\SoftToken\SoftTokenRequestReaders\SoftTokenIdentifierMethodologies\SoftToken_LINK_Methodology", // read from QueryStrings
     ];
-    public static array $StatefulDrivers = [
+    public static array $statefulDrivers = [
         'Default' => "", // Eloquent
         'Database' => "\App\Extensions\SoftToken\SoftTokenStatefulDrivers\SoftTokenStatefulDriversDefault",
     ];
-
+    public static array $statelessDrivers = [
+        'Default' => "",
+    ];
     public static array $RequestCheckerMethodologies = [
         'headersMetaData' => "\App\Extensions\SoftToken\SoftTokenRequestCheckerMethodologies\SoftTokenRequestCheckerHeader",
         'routeParamsMetaData' => "\App\Extensions\SoftToken\SoftTokenRequestCheckerMethodologies\SoftTokenRequestCheckerRouteParams",
@@ -65,7 +68,225 @@ class SoftGuard implements Guard
     }
 
     //////////////////////////////////////////////
-    public function RequestReader($config): SoftTokenIdentified
+    public function RequestReader(array $config): ?array
+    {
+        $status = false;
+        $accessToken = null;
+
+        if (!in_array(key($config['validator']), array_keys(self::$requestReaders))) {
+            $status = 'The Request Validator Not Match request Readers.';
+            $accessToken = null;
+        }
+        else {
+            $requestReader = new self::$requestReaders[key($config['validator'])](
+                $this->request,
+                $this->config
+            );
+            $requestReader->loader();
+            $status = $requestReader->getStatus();
+            $accessToken = $requestReader->getAccessToken();
+        }
+
+        return [
+            'status' => $status,
+            'accessToken' => $accessToken,
+        ];
+    }
+
+    public function ExtractClaims(string $accessToken, $config): ?array
+    {
+        $status = false;
+        $claims = [];
+        $type = key($config['validator']);
+        $methodologyConfig = $config['validator'][$type];
+        $algo = $config['validator'][$type]['algo'];
+
+        if (is_array($accessToken)) {
+            //
+        }
+        else {
+            $Methodology = new SoftGuard::$methodologies[$algo](
+                $accessToken,
+                $methodologyConfig,
+            );
+            $Methodology->decode();
+            $status = $Methodology->tokenStatus;
+            $claims = $Methodology->claims;
+        }
+
+        return [
+            'status' => $status,
+            'claims' => $claims,
+        ];
+    }
+
+    public function StateDrivers(SoftTokenIdentified $softToken, array $config): ?array
+    {
+        $status = false;
+        $AccessTokenID = '';
+        $AccessTokenName = '';
+        $AccessTokenExpirationTime = '';
+        $AccessTokenEntityData = [];
+        $providerModelIdentify = [
+            "providerModelName" => null,
+            "providerModelID" => null,
+        ];
+        $providerModelName = null;
+        $providerModelID = null;
+
+
+        if (($config['type'] == 'stateless') or (empty($config))) {
+            if (isset(self::$statelessDrivers[$config['driver']])) {
+                $statelessDrivers = new self::$statelessDrivers[$config['driver']](
+                    $softToken->getAccessToken(),
+                    $config['identifyCondition'],
+                );
+                $statelessDrivers->loadTokenData();
+
+                $status = $statelessDrivers->getStatus();
+                $AccessTokenID = $statelessDrivers->getAccessTokenID();
+                $AccessTokenName = $statelessDrivers->getAccessTokenName();
+                $AccessTokenExpirationTime = $statelessDrivers->getAccessTokenExpirationTime();
+                $AccessTokenEntityData = $statelessDrivers->getAccessTokenEntityData();
+                $providerModelName = $statelessDrivers->getProviderModelName();
+                $providerModelID = $statelessDrivers->getProviderModelId();
+            }
+            else {
+                $status = 'Stateless Drivers not found';
+                $AccessTokenID = null;
+                $AccessTokenName = null;
+                $AccessTokenExpirationTime = null;
+                $AccessTokenEntityData = [];
+                $providerModelName = null;
+                $providerModelID = null;
+            }
+        }
+        elseif ($config['type'] == 'stateful') {
+            if (isset(self::$statefulDrivers[$config['driver']])) {
+                $statefulDrivers = new self::$statefulDrivers[$config['driver']](
+                    $softToken->getAccessToken(),
+                    $config['identifyCondition'],
+                );
+                $statefulDrivers->loadTokenData();
+
+                $status = $statefulDrivers->getStatus();
+                $AccessTokenID = $statefulDrivers->getAccessTokenID();
+                $AccessTokenName = $statefulDrivers->getAccessTokenName();
+                $AccessTokenExpirationTime = $statefulDrivers->getAccessTokenExpirationTime();
+                $AccessTokenEntityData = $statefulDrivers->getAccessTokenEntityData();
+                $providerModelName = $statefulDrivers->getProviderModelName();
+                $providerModelID = $statefulDrivers->getProviderModelId();
+            }
+            else {
+                $status = 'Stateful Drivers not found';
+                $AccessTokenID = null;
+                $AccessTokenName = null;
+                $AccessTokenExpirationTime = null;
+                $AccessTokenEntityData = [];
+                $providerModelName = null;
+                $providerModelID = null;
+            }
+        }
+        else {
+            $status = 'State type undefined';
+            $AccessTokenID = null;
+            $AccessTokenName = null;
+            $AccessTokenExpirationTime = null;
+            $AccessTokenEntityData = [];
+            $providerModelName = null;
+            $providerModelID = null;
+        }
+
+        return [
+            'status' => $status,
+            'AccessTokenID' => $AccessTokenID,
+            'AccessTokenName' => $AccessTokenName,
+            'AccessTokenExpirationTime' => $AccessTokenExpirationTime,
+            'AccessTokenEntityData' => $AccessTokenEntityData,
+//            'providerModelIdentify' => $providerModelIdentify,
+            'providerModelIdentify' => [
+                'providerModelName' => $providerModelName,
+                'providerModelID' => $providerModelID,
+            ],
+        ];
+    }
+
+    public function RequestMetaDataChecker($config, $class, Request $request, $softTokenIdentify): array
+    {
+        $status = false;
+        $RequestMetaData = [];
+
+        $requestChecker = new $class(
+            $config,
+            $request,
+            $softTokenIdentify,
+        );
+
+        $status = $requestChecker->getMatchDataStatus();
+        $CheckAbleData = $requestChecker->getCheckAbleData();
+        $RequestMetaData = $requestChecker->getMatchData();
+
+        return [
+            'status' => $status,
+            'RequestMetaData' => $RequestMetaData,
+        ];
+    }
+
+    public function StoredDataChecker($config, $softTokenIdentify): array
+    {
+        $status = false;
+        $StoredDataCheckerData = [];
+
+        $StoredDataChecker = new self::$SoftTokenStoredDataChecker(
+            $config,
+            $softTokenIdentify,
+        );
+
+        $status = $StoredDataChecker->matchDataStatus;
+        $StoredDataCheckerData = $StoredDataChecker->getMatchData();
+
+        return [
+            'status' => $status,
+            'StoredDataChecker' => $StoredDataCheckerData,
+        ];
+    }
+
+    public function MoreModelEntityData($config, $tokenEntityData)
+    {
+        $status = false;
+        $databaseMetaDate = [];
+        foreach ($config as $key => $value) {
+            $storedDataModel = "App\Models\\" . ucfirst(strtolower((string)$value));
+            if (class_exists($storedDataModel)) {
+                $currentToken = self::$tokenModel::where('id', '=', $tokenEntityData['id'])
+                    ->first();
+                // //
+                $relationAble = $currentToken->$value();
+                if (!$relationAble->first()) {
+                    $status = 'Not found relation name: '.(string)ucfirst(strtolower((string)$value));
+                    $row = [];
+                }
+                else {
+                    $status = null;
+                    $row = $relationAble->first()->toArray();
+                }
+                $databaseMetaDate[$key] = $row;
+            }else{
+                $status = 'Not found model class name: '.(string)ucfirst(strtolower((string)$value));
+                $databaseMetaDate[$key] = [];
+            }
+        }
+
+
+        return [
+            'status' => $status,
+            'databaseMetaDate' => $databaseMetaDate,
+        ];
+
+    }
+
+    ///////////////////////////////////////////
+    public function RequestReader_1($config): SoftTokenIdentified
     {
         $result = new SoftTokenIdentified();
         if (!in_array(key($config['validator']), array_keys(self::$requestReaders))) {
@@ -88,15 +309,15 @@ class SoftGuard implements Guard
         return $result;
     }
 
-    public function StateDrivers($softTokenIdentify)
+    public function StateDrivers_1($softTokenIdentify)
     {
         if (($this->config['state']['driver'] == 'stateless') or ($this->config['state'] == null)) {
 //            $softTokenIdentify->AccessTokenEntityData = [];
             $AccessTokenEntityData = [];
         }
         else {
-            if (isset(self::$StatefulDrivers[$this->config['state']['driver']])) {
-                $statefulDrivers = new self::$StatefulDrivers[$this->config['state']['driver']](
+            if (isset(self::$statefulDrivers[$this->config['state']['driver']])) {
+                $statefulDrivers = new self::$statefulDrivers[$this->config['state']['driver']](
                     $softTokenIdentify,
                     $this->config['state']['identifyCondition']
                 // or
@@ -174,7 +395,7 @@ class SoftGuard implements Guard
                     }
                 }
                 else {
-                    $message = 'Can not found RequestCheckerMethodology: '.' for check request.';
+                    $message = 'Can not found RequestCheckerMethodology: ' . ' for check request.';
                     $softTokenIdentify->identifyStatus = $message;
                     $softTokenIdentify->setIdentifyStatusLogs($message, 'RequestChecker ' . $key);
                 }
@@ -206,7 +427,73 @@ class SoftGuard implements Guard
         */
     }
 
-    public function StoredDataChecker($config, $softTokenIdentify)
+    public function RequestMetaDataChecker_1(Request $request, SoftTokenIdentified $softTokenIdentify, array $config): ?array
+    {
+        $status = false;
+        $RequestMetaData = [];
+        $headersMetaData = [];
+        $routeParamsMetaData = [];
+        $queryStringsMetaData = [];
+        $cookiesMetaData = [];
+
+        $requestCheckerConfig = $config['requestChecker'];
+
+        foreach (self::$RequestCheckerMethodologies as $key => $value) {
+            if (!empty($requestCheckerConfig[$key])) {
+                if (in_array($key, array_keys($requestCheckerConfig))) {
+                    $MetaData = $requestCheckerConfig[$key];
+                    $requestChecker = new self::$RequestCheckerMethodologies[$key](
+                        $MetaData,
+                        $request,
+                        $softTokenIdentify,
+                    );
+                    $requestChecker->getCheckAbleData();
+                    if ($requestChecker->matchDataStatus != null) {
+                        $status = false;
+                        $headersMetaData = [];
+                        $routeParamsMetaData = [];
+                        $queryStringsMetaData = [];
+                        $cookiesMetaData = [];
+                    }
+                    else {
+                        $status = null;
+                        $headersMetaData = [];
+                        $routeParamsMetaData = [];
+                        $queryStringsMetaData = [];
+                        $cookiesMetaData = [];
+                    }
+                }
+                else {
+                    $status = 'Can not found RequestCheckerMethodology: ' . ' for check request.';
+                    $headersMetaData = [];
+                    $routeParamsMetaData = [];
+                    $queryStringsMetaData = [];
+                    $cookiesMetaData = [];
+                }
+            }
+            else {
+                $status = null;
+                $RequestMetaData[(string)$key] = [];
+//                $headersMetaData = [];
+//                $routeParamsMetaData = [];
+//                $queryStringsMetaData = [];
+//                $cookiesMetaData = [];
+            }
+        }
+
+
+        return [
+            'status' => $status,
+            'RequestMetaData' => [
+                'headersMetaData' => $headersMetaData,
+                'routeParamsMetaData' => $routeParamsMetaData,
+                'queryStringsMetaData' => $queryStringsMetaData,
+                'cookiesMetaData' => $cookiesMetaData,
+            ],
+        ];
+    }
+
+    public function StoredDataChecker_1($config, $softTokenIdentify)
     {
         $softTokenStoredData = new self::$SoftTokenStoredDataChecker($config['storedDataChecker'], $softTokenIdentify);
         $softTokenStoredData->getMatchData();
@@ -217,35 +504,128 @@ class SoftGuard implements Guard
 
     public function ReadStoredData($config, $softTokenIdentify)
     {
-        dd($config, $softTokenIdentify);
+//        dd($config, $softTokenIdentify);
+        $ReadStoredDataConfig = $config['databaseMetaDate'];
+        $storedDataLoaded = [];
+        if (is_array($ReadStoredDataConfig)) {
+            foreach ($ReadStoredDataConfig as $key => $value) {
+                // model if exist
+                $storedDataModel = "App\Models\\" . ucfirst(strtolower((string)$value));
+                if (class_exists($storedDataModel)) {
+                    $currentToken = self::$tokenModel::where('token', '=', $softTokenIdentify->AccessToken)
+                        ->first();
+                    if ($key == 'providerModel') {
+                        $tokenAble = $currentToken->tokenable();
+                        if (!$tokenAble->first()) {
+                            $row = [];
+                        }
+                        else {
+                            $row = $tokenAble->first()->toArray();
+                        }
+                        $storedDataLoaded['providerModel'] = $row;
+                    }
+                    else {
+                        // column relation
+                        $relationAble = $currentToken->$value();
+                        if (!$relationAble->first()) {
+                            $row = [];
+                        }
+                        else {
+                            $row = $relationAble->first()->toArray();
+                        }
+                        $storedDataLoaded[$key] = $row;
+                    }
+                }
+                else {
+                    $storedDataLoaded[$key] = [];
+//                    dd('not ', $storedDataModel);
+                }
+            }
+        }
+        else {
+            //model if exist
+        }
+//        $config['provider']
         // get token relational and provider (user)
-        $softTokenIdentify->ProviderModelEntityData = [];
-        $softTokenIdentify->MoreModelEntityData = [];
+        $softTokenIdentify->providerModelEntityData = $storedDataLoaded['providerModel'];
+        $softTokenIdentify->MoreModelEntityData = $storedDataLoaded;
+        dd($softTokenIdentify);
         return $softTokenIdentify;
     }
+
     //////////////////////////////////////////////
 
     public function user(): ?Authenticatable
     {
-        $softTokenIdentify = $this->RequestReader($this->config);
-        $softTokenIdentify = $this->StateDrivers($softTokenIdentify);
-        $softTokenIdentify = $this->RequestChecker($this->config, $softTokenIdentify);
-        $softTokenIdentify = $this->StoredDataChecker($this->config, $softTokenIdentify);
-        // add cookie checker
-        $softTokenIdentify = $this->ReadStoredData($this->config, $softTokenIdentify);
-//dd(
-//    $this->request->input('link'),
-//    $this->request->cookie('SoftTokenCookie'),
-//    $this->request->cookies,
-//    $this->request,
-//);
+        $softTokenIdentified = new SoftTokenIdentified();
 
-        dd($softTokenIdentify);
+        $RequestReader = $this->RequestReader($this->config);
+        $softTokenIdentified->setAccessToken($RequestReader['accessToken']);
+        $softTokenIdentified->setIdentifyStatusLogs($RequestReader['status'], 'RequestReader');
+
+        $extractClaims = $this->ExtractClaims($softTokenIdentified->getAccessToken(), $this->config);
+        $softTokenIdentified->setAccessTokenClaims($extractClaims['claims']);
+        $softTokenIdentified->setIdentifyStatusLogs($extractClaims['status'], 'ExtractClaims');
+
+        $stateDrivers = $this->StateDrivers($softTokenIdentified, $this->config['state']);
+        $softTokenIdentified->setAccessTokenID($stateDrivers['AccessTokenID']);
+        $softTokenIdentified->setAccessTokenName($stateDrivers['AccessTokenName']);
+        $softTokenIdentified->setAccessTokenExpirationTime($stateDrivers['AccessTokenExpirationTime']);
+        $softTokenIdentified->setIdentifyStatusLogs($stateDrivers['status'], 'StateDrivers');
+        if ($this->config['state']['type'] == 'stateful') {
+            $softTokenIdentified->setAccessTokenEntityData($stateDrivers['AccessTokenEntityData']);
+            // $stateDrivers['AccessTokenEntityData']
+            $MoreModelEntityData = $this->MoreModelEntityData($this->config['databaseMetaDate'], $stateDrivers['AccessTokenEntityData']);
+            $softTokenIdentified->setIdentifyStatusLogs($MoreModelEntityData['status'], 'MoreModelEntityData');
+        }
+        elseif ($this->config['state']['type'] == 'stateless') {
+            $softTokenIdentified->setAccessTokenEntityData([]);
+            //
+            $MoreModelEntityData = [];
+            $message = null;
+            $softTokenIdentified->setIdentifyStatusLogs($message, 'MoreModelEntityData');
+        }
+        else {
+            $softTokenIdentified->setAccessTokenEntityData([]);
+            //
+            $MoreModelEntityData = [];
+            $message = 'can not load more model entity data. state type undefined';
+            $softTokenIdentified->setIdentifyStatusLogs($message, 'MoreModelEntityData');
+        }
+        $softTokenIdentified->setProviderModelIdentify(
+            $stateDrivers['providerModelIdentify']['providerModelName'],
+            $stateDrivers['providerModelIdentify']['providerModelID'],
+        );
+
+        foreach (self::$RequestCheckerMethodologies as $key => $value) {
+            $RequestMetaDataChecker = $this->RequestMetaDataChecker($this->config['requestChecker'][$key], $value, $this->request, $softTokenIdentified);
+            $softTokenIdentified->setRequestMetaData([$key => $RequestMetaDataChecker['RequestMetaData']]);
+            $softTokenIdentified->setIdentifyStatusLogs($RequestMetaDataChecker['status'], 'RequestMetaDataChecker ' . $key);
+        }
+
+        $StoredDataChecker = $this->StoredDataChecker($this->config['storedDataChecker'], $softTokenIdentified);
+        $softTokenIdentified->setRequestMetaData(['StoredDataChecker' => $StoredDataChecker['StoredDataChecker']]);
+        $softTokenIdentified->setIdentifyStatusLogs($StoredDataChecker['status'], 'StoredDataChecker');
+
+        $ProviderModel = $this->provider->retrieveById((int)$softTokenIdentified->getProviderModelID());
+        if (!$ProviderModel) {
+            $this->user = null;
+            $softTokenIdentified->setProviderModelEntityData([]);
+            $message = 'can not read provider data';
+            $softTokenIdentified->setIdentifyStatusLogs($message, 'ProviderModel');
+        }
+        else {
+            $this->user = $ProviderModel;
+            $softTokenIdentified->setProviderModelEntityData($ProviderModel->toArray());
+            $message = null;
+            $softTokenIdentified->setIdentifyStatusLogs($message, 'ProviderModel');
+        }
+
+
+        dd($softTokenIdentified);
         if ($softTokenIdentify->identifyStatus != null) {
             return null;
         }
-        $this->user = $this->provider->retrieveById($softTokenIdentify['providerModelID']);
-        // TODO: Implement user() method.
         return $this->user;
     }
 
@@ -285,7 +665,7 @@ class SoftGuard implements Guard
     public function initialSoftConfig($config, $defaultConfig): array
     {
         // try exception config problem
-        //////////////////////
+        ////////////////////// ucfirst(strtolower())
         if (!isset($config['driver'])) {
             $initialedSoftConfig['driver'] = 'soft';
         }
@@ -427,6 +807,13 @@ class SoftGuard implements Guard
             }
         }
         else {
+            if (!isset($config['state']['type'])) {
+                $state['type'] = 'stateful';
+            }
+            else {
+                $state['type'] = $config['state']['type'];
+            }
+
             if (!isset($config['state']['driver'])) {
                 $state['driver'] = 'Database';
             }
@@ -497,7 +884,7 @@ class SoftGuard implements Guard
         }
         else {
             $storedDataChecker = [];
-            if(is_array($config['storedDataChecker'])) {
+            if (is_array($config['storedDataChecker'])) {
                 foreach ($config['storedDataChecker'] as $key => $value) {
                     if (!is_array($value) or (count($value) < 2)) {
                         $storedDataChecker[$key] = [];

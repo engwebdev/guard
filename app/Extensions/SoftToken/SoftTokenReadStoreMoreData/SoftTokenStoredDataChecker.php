@@ -35,6 +35,7 @@ class SoftTokenStoredDataChecker
 //                throw new \Exception($message);
             }
             else {
+//                dd($this->softTokenIdentify->AccessTokenClaims);
                 $modelEntity = "App\Models\\" . ucfirst(strtolower($value[0]));
                 $modelIdName = $value[1];
                 $modelIdValueFromTokenClaimKey = $this->softTokenIdentify->AccessTokenClaims[$key];

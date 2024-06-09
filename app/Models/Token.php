@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Extensions\SoftToken\SoftGuard;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Token extends Model
 {
@@ -44,13 +46,17 @@ class Token extends Model
     /**
      * Get the tokenable model that the access token belongs to.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * @return MorphTo
      */
-    public function tokenable()
+    public function tokenable(): MorphTo
     {
-        return $this->morphTo('tokenable');
+        return $this->morphTo('tokenable', 'tokenable_type', 'tokenable_id', 'id');
     }
 
+    public function Client()
+    {
+        return [1,2,3,4,5,6];
+    }
     /**
      * Find the token instance matching the given token.
      *

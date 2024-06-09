@@ -10,9 +10,9 @@ class SoftTokenRequestCheckerHeader
 {
     public string|null $matchDataStatus = null;
     protected array|null $checkAbleData = [];
+    public array|null $matchData = [];
     protected SoftTokenIdentified $softToken;
     protected Request $request;
-    public array|null $matchData = [];
 
     public function __construct(array $data, Request $request, SoftTokenIdentified $softTokenIdentify)
     {
@@ -54,16 +54,17 @@ class SoftTokenRequestCheckerHeader
         $this->matchData[$headerKeyName] = [$tokenClaimName, true];
     }
 
-    /**
-     * @return array|null
-     */
+    public function getMatchDataStatus(): ?string
+    {
+        return $this->matchDataStatus;
+    }
     public function getCheckAbleData(): ?array
     {
         return $this->checkAbleData;
     }
-
     public function getMatchData(): ?array
     {
         return $this->matchData;
     }
+
 }
